@@ -66,15 +66,21 @@ export const OnboardingModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 overflow-hidden">
-      {/* Soft Ambient Tempered Backdrop */}
+      {/* Soft Abstract Silk Wallpaper + Tempered Backdrop */}
+      <img
+        src="/onboarding-bg.jpg"
+        alt=""
+        aria-hidden="true"
+        className={`absolute inset-0 w-full h-full object-cover scale-105 transition-all duration-500 ${
+          isDark ? 'opacity-85 brightness-90' : 'opacity-45 invert brightness-110 contrast-90'
+        }`}
+      />
       <div
         className="absolute inset-0 transition-colors duration-500"
         style={{
           background: isDark
-            ? 'radial-gradient(110% 80% at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(18,18,22,0.94) 48%, rgba(0,0,0,0.98) 100%)'
-            : 'radial-gradient(110% 80% at 50% 0%, rgba(15,23,42,0.10) 0%, rgba(242,242,247,0.92) 55%, rgba(229,229,234,0.96) 100%)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
+            ? 'radial-gradient(110% 80% at 50% 0%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.42) 60%, rgba(0,0,0,0.65) 100%)'
+            : 'radial-gradient(110% 80% at 50% 0%, rgba(255,255,255,0.35) 0%, rgba(242,242,247,0.55) 60%, rgba(229,229,234,0.75) 100%)',
         }}
       />
 
@@ -85,14 +91,14 @@ export const OnboardingModal: React.FC = () => {
         className="relative z-10 w-full max-w-[430px] max-h-[92vh] flex flex-col rounded-t-[30px] sm:rounded-[30px] overflow-hidden border"
         style={{
           background: isDark
-            ? 'linear-gradient(180deg, rgba(30,30,34,0.88) 0%, rgba(16,16,18,0.95) 100%)'
-            : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(244,244,248,0.96) 100%)',
-          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.08)',
+            ? 'linear-gradient(180deg, rgba(28,28,32,0.66) 0%, rgba(16,16,20,0.76) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(244,244,248,0.82) 100%)',
+          borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.85)',
           boxShadow: isDark
-            ? '0 24px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.14)'
-            : '0 24px 60px rgba(15,23,42,0.14), inset 0 1px 0 rgba(255,255,255,0.9)',
-          backdropFilter: 'blur(32px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+            ? '0 24px 60px rgba(0,0,0,0.65), inset 0 1.5px 0 rgba(255,255,255,0.22)'
+            : '0 24px 60px rgba(15,23,42,0.14), inset 0 1.5px 0 rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(36px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(36px) saturate(190%)',
         }}
       >
         {/* Top Tab Bar + Header */}
