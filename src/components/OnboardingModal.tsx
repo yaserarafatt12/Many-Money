@@ -6,8 +6,9 @@ import { useMoneyStore } from '../store/useMoneyStore';
 import { CURRENCIES } from '../utils/format';
 
 export const OnboardingModal: React.FC = () => {
-  const { settings, updateSettings } = useMoneyStore();
+  const { settings, updateSettings, signInWithGoogle } = useMoneyStore();
   const [search, setSearch] = useState('');
+  const [authMsg, setAuthMsg] = useState<string | null>(null);
 
   const filteredCurrencies = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -162,13 +163,34 @@ export const OnboardingModal: React.FC = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => updateSettings({ hasOnboarded: true })}
-          className="w-full mt-5 py-3.5 rounded-[14px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] font-semibold text-[15px] active:opacity-85 transition"
-        >
-          {isId ? 'Mulai Sekarang' : 'Get Started'}
-        </button>
+        {authMsg && (
+          <p className="mt-3 text-[12px] text-center" style={{ color: 'var(--sys-red)' }}>
+            {authMsg}
+          </p>
+        )}
+
+        <div className="mt-5 space-y-2.5">
+          <button
+            type="button"
+            onClick={async () => {
+              updateSettings({ hasOnboarded: true });
+              const res = await signInWithGoogle();
+              if (!res.ok && res.error) setAuthMsg(res.error);
+            }}
+            className="w-full py-3.5 rounded-[14px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] font-semibold text-[14.5px] flex items-center justify-center gap-2 active:opacity-85 transition"
+          >
+            <span className="font-bold text-[15px]">G</span>
+            {isId ? 'Masuk dengan Google (Sync Supabase)' : 'Continue with Google (Supabase)'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => updateSettings({ hasOnboarded: true })}
+            className="w-full py-3 rounded-[14px] ios-input-well font-semibold text-[14px] text-[var(--text-primary)] active:opacity-80 transition"
+          >
+            {isId ? 'Lanjutkan sebagai Guest (Simpan di Browser)' : 'Continue as Guest (Browser Storage)'}
+          </button>
+        </div>
       </motion.div>
     </div>
   );

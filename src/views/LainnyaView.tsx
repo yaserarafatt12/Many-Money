@@ -81,6 +81,7 @@ export const LainnyaView: React.FC = () => {
     resetAllData,
     cloudUser,
     cloudSyncStatus,
+    signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     signOutCloud,
@@ -222,6 +223,85 @@ export const LainnyaView: React.FC = () => {
       </div>
 
       <div className="space-y-6">
+        {/* Section: Akun & Sinkronisasi (Guest vs Google Supabase) */}
+        <section>
+          <div className="text-[12px] font-medium uppercase tracking-wide text-[var(--text-secondary)] px-3 mb-2">
+            {isEn ? 'Account & Sync' : 'Akun & Sinkronisasi'}
+          </div>
+          <div className="ios-card p-3.5 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[15px] font-semibold truncate">
+                  {cloudUser ? cloudUser.email || 'Google Account' : isEn ? 'Guest Mode' : 'Mode Guest'}
+                </div>
+                <div className="text-[12px] text-[var(--text-secondary)] truncate">
+                  {cloudUser
+                    ? isEn
+                      ? 'Synced to Supabase Cloud'
+                      : 'Tersinkron ke Supabase Cloud'
+                    : isEn
+                      ? 'Saved locally in this browser'
+                      : 'Tersimpan lokal di browser ini'}
+                </div>
+              </div>
+              <span
+                className="px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0"
+                style={{
+                  backgroundColor: cloudUser
+                    ? 'rgba(48,209,88,0.16)'
+                    : 'var(--ios-fill-secondary)',
+                  color: cloudUser ? 'var(--sys-green)' : 'var(--text-secondary)',
+                }}
+              >
+                {cloudUser
+                  ? cloudSyncStatus === 'syncing'
+                    ? 'Syncing...'
+                    : 'Supabase'
+                  : 'Browser'}
+              </span>
+            </div>
+
+            {cloudUser ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await syncNow();
+                    showToast(isEn ? 'Synced to Supabase.' : 'Tersinkron ke Supabase.');
+                  }}
+                  className="flex-1 py-2.5 px-3 rounded-[12px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[13px] font-semibold flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {isEn ? 'Sync Now' : 'Sync Sekarang'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await signOutCloud();
+                    showToast(isEn ? 'Switched to Guest Mode.' : 'Kembali ke Mode Guest.');
+                  }}
+                  className="py-2.5 px-3.5 rounded-[12px] ios-input-well text-[13px] font-medium flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  {isEn ? 'Guest' : 'Keluar'}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await signInWithGoogle();
+                  if (!res.ok) showToast(res.error || 'Gagal login Google');
+                }}
+                className="w-full py-2.5 px-3.5 rounded-[12px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[13.5px] font-semibold flex items-center justify-center gap-2 active:opacity-85 transition"
+              >
+                <span className="font-bold">G</span>
+                {isEn ? 'Sign in with Google (Sync Supabase)' : 'Masuk dengan Google (Sync Supabase)'}
+              </button>
+            )}
+          </div>
+        </section>
+
         {/* Section: Tampilan (Hitam & Putih saja) */}
         <section>
           <div className="text-[12px] font-medium uppercase tracking-wide text-[var(--text-secondary)] px-3 mb-2">
@@ -750,6 +830,19 @@ export const LainnyaView: React.FC = () => {
                       </div>
                     ) : (
                       <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const res = await signInWithGoogle();
+                            if (!res.ok) showToast(res.error || 'Gagal login Google');
+                          }}
+                          className="w-full py-2.5 rounded-[12px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[13px] font-semibold flex items-center justify-center gap-2"
+                        >
+                          <span className="font-bold">G</span> Masuk dengan Google
+                        </button>
+                        <div className="text-[11px] text-center text-[var(--text-tertiary)]">
+                          atau pakai email
+                        </div>
                         <input
                           type="email"
                           value={cloudEmail}

@@ -112,6 +112,7 @@ interface MoneyContextValue {
   // Cloud Sync (Supabase)
   cloudUser: { id: string; email?: string } | null;
   cloudSyncStatus: 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
+  signInWithGoogle: () => Promise<{ ok: boolean; error?: string }>;
   signInWithEmail: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signOutCloud: () => Promise<void>;
@@ -425,6 +426,15 @@ export const MoneyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     },
     cloudUser,
     cloudSyncStatus,
+    signInWithGoogle: async () => {
+      if (!supabase) return { ok: false, error: 'Supabase belum dikonfigurasi' };
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
     signInWithEmail: async (email, password) => {
       if (!supabase) return { ok: false, error: 'Supabase belum dikonfigurasi' };
       const { error } = await supabase.auth.signInWithPassword({ email, password });
