@@ -571,7 +571,6 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 ref={receiptInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleReceiptSelected}
                 className="hidden"
               />
