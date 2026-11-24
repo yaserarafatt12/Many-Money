@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Check, Search, Sparkles, UserRound, Wallet } from 'lucide-react';
+import { ArrowLeft, Check, Search, UserRound, Wallet } from 'lucide-react';
 import { CurrencyCode } from '../types';
 import { useMoneyStore } from '../store/useMoneyStore';
 import { CURRENCIES } from '../utils/format';
@@ -66,13 +66,16 @@ export const OnboardingModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 overflow-hidden">
+      {/* Solid 100% Opaque Base Layer so underlying app never bleeds through */}
+      <div className={`absolute inset-0 ${isDark ? 'bg-black' : 'bg-[#F2F2F7]'}`} />
+
       {/* Soft Abstract Silk Wallpaper + Tempered Backdrop */}
       <img
         src="/onboarding-bg.jpg"
         alt=""
         aria-hidden="true"
         className={`absolute inset-0 w-full h-full object-cover scale-105 transition-all duration-500 ${
-          isDark ? 'opacity-85 brightness-90' : 'opacity-45 invert brightness-110 contrast-90'
+          isDark ? 'opacity-90 brightness-90' : 'opacity-40 invert brightness-110 contrast-90'
         }`}
       />
       <div
@@ -183,36 +186,8 @@ export const OnboardingModal: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-4 pt-1"
+                className="space-y-3 pt-2"
               >
-                {/* Soft Hero Card */}
-                <div
-                  className="rounded-[22px] p-5 border relative overflow-hidden"
-                  style={{
-                    background: isDark
-                      ? 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)'
-                      : 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(241,245,249,0.75) 100%)',
-                    borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.07)',
-                  }}
-                >
-                  <div
-                    className="w-11 h-11 rounded-[14px] flex items-center justify-center mb-3"
-                    style={{
-                      background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.06)',
-                    }}
-                  >
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-[19px] font-bold tracking-tight mb-1">
-                    {isId ? 'Catat keuangan tanpa ribet' : 'Track money effortlessly'}
-                  </h3>
-                  <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
-                    {isId
-                      ? 'Pakai Mode Guest langsung di browser, atau masuk Google untuk sinkronisasi otomatis ke Supabase.'
-                      : 'Start instantly in Guest Mode, or sign in with Google to sync automatically via Supabase.'}
-                  </p>
-                </div>
-
                 {/* Account Mode Buttons */}
                 <div className="space-y-2.5">
                   <button
