@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Check, Search, UserRound, Wallet } from 'lucide-react';
+import { ArrowLeft, Check, Cloud, Mic, Search, ShieldCheck, UserRound, Wallet } from 'lucide-react';
 import { CurrencyCode } from '../types';
 import { useMoneyStore } from '../store/useMoneyStore';
 import { CURRENCIES } from '../utils/format';
@@ -186,8 +186,44 @@ export const OnboardingModal: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-3 pt-2"
+                className="space-y-4 pt-2"
               >
+                {/* Clean Apple-style minimal feature rows */}
+                <div className="rounded-[18px] ios-input-well divide-y ios-divider px-4">
+                  {[
+                    {
+                      icon: Mic,
+                      title: isId ? 'Catat instan' : 'Instant logging',
+                      desc: isId ? 'Manual, suara, atau scan struk' : 'Manual, voice, or receipt scan',
+                    },
+                    {
+                      icon: ShieldCheck,
+                      title: isId ? 'Mode Guest privat' : 'Private Guest Mode',
+                      desc: isId ? 'Tersimpan lokal di browser tanpa login' : 'Saved locally in your browser',
+                    },
+                    {
+                      icon: Cloud,
+                      title: isId ? 'Sync Akun Google' : 'Google Cloud Sync',
+                      desc: isId ? 'Cadangkan otomatis lewat Supabase' : 'Auto backup via Supabase',
+                    },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="py-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-[10px] ios-card flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-[var(--text-primary)]" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[13.5px] font-semibold leading-tight">{item.title}</div>
+                          <div className="text-[12px] text-[var(--text-secondary)] truncate">
+                            {item.desc}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
                 {/* Account Mode Buttons */}
                 <div className="space-y-2.5">
                   <button
