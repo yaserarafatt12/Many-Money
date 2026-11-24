@@ -372,34 +372,75 @@ export function parseVoiceToTransaction(
   };
 }
 
+function stripNoiseTokens(line: string): string {
+  return (
+    line
+      // Remove dates: 24/11/2026, 2026-11-24, 24.11.26
+      .replace(/\b\d{1,4}[-/.]\d{1,2}[-/.]\d{2,4}\b/g, ' ')
+      // Remove times: 19:51, 19:51:02
+      .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, ' ')
+      // Remove percentages: 14%, 11.5%
+      .replace(/\b\d+(?:[.,]\d+)?\s*%/g, ' ')
+      // Remove reference/invoice/phone/qty prefixes: #1234, No: 123, Tel: 010..., Qty 2
+      .replace(/(?:#|no\.?|id|ref|inv|trx|telp?|hp|fax|npwp|qty|pcs|items?)\s*[:.]?\s*\d[\d\-/.]*/gi, ' ')
+      // Remove multiplier quantities like 2x, 3 x
+      .replace(/\b\d+\s*[xX×]\b/g, ' ')
+  );
+}
+
 function extractAmountFromReceiptLine(line: string): number | null {
-  const matches = line.match(/\d[\d.,]*\d|\d+/g);
+  const cleaned = stripNoiseTokens(line);
+
+  // 1. Prefer explicit currency-tagged amount on this line (e.g. EGP 145.50, Rp 45.000, S$ 12.50, 145 LE)
+  const currencyRegex =
+    /(?:rp|idr|egp|l\.?e\.?|e£|sgd|s\$|gbp|£|usd|\$|eur|€)\s*[:.]?\s*(\d[\d.,]*\d|\d+)|(\d[\d.,]*\d|\d+)\s*(?:idr|egp|l\.?e\.?|le|sgd|gbp|usd|eur)\b/gi;
+  const currencyCandidates: number[] = [];
+  for (const m of cleaned.matchAll(currencyRegex)) {
+    const raw = m[1] || m[2];
+    if (!raw) continue;
+    const parsed = parseReceiptNumberToken(raw);
+    if (parsed !== null) currencyCandidates.push(parsed);
+  }
+  if (currencyCandidates.length > 0) {
+    return currencyCandidates[currencyCandidates.length - 1];
+  }
+
+  // 2. Fallback to rightmost plausible numeric token on the cleaned line
+  const matches = cleaned.match(/\d[\d.,]*\d|\d+/g);
   if (!matches) return null;
   const candidates: number[] = [];
   for (const raw of matches) {
-    // Skip long codes (barcodes / phone numbers / dates)
-    const digitsOnly = raw.replace(/[.,]/g, '');
-    if (digitsOnly.length > 10) continue;
-
-    let val: number;
-    if (/^\d{1,3}(\.\d{3})+,\d{2}$/.test(raw)) {
-      val = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
-    } else if (/^\d{1,3}(,\d{3})+\.\d{2}$/.test(raw)) {
-      val = parseFloat(raw.replace(/,/g, ''));
-    } else if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
-      val = parseInt(digitsOnly, 10);
-    } else if (/^\d+[.,]\d{2}$/.test(raw)) {
-      val = parseFloat(raw.replace(',', '.'));
-    } else if (/^\d+$/.test(raw)) {
-      val = parseInt(raw, 10);
-    } else {
-      val = parseFloat(raw.replace(/[.,]/g, ''));
-    }
-    if (Number.isFinite(val) && val >= 5 && val <= 100_000_000) {
-      candidates.push(val);
-    }
+    // Skip phone numbers or zero-padded codes (e.g. 010123456, 00123)
+    if (/^0\d{2,}$/.test(raw)) continue;
+    const parsed = parseReceiptNumberToken(raw);
+    if (parsed !== null) candidates.push(parsed);
   }
   return candidates.length > 0 ? candidates[candidates.length - 1] : null;
+}
+
+function parseReceiptNumberToken(raw: string): number | null {
+  const digitsOnly = raw.replace(/[.,]/g, '');
+  if (digitsOnly.length > 10) return null;
+
+  let val: number;
+  if (/^\d{1,3}(\.\d{3})+,\d{2}$/.test(raw)) {
+    val = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+  } else if (/^\d{1,3}(,\d{3})+\.\d{2}$/.test(raw)) {
+    val = parseFloat(raw.replace(/,/g, ''));
+  } else if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
+    val = parseInt(digitsOnly, 10);
+  } else if (/^\d+[.,]\d{2}$/.test(raw)) {
+    val = parseFloat(raw.replace(',', '.'));
+  } else if (/^\d+$/.test(raw)) {
+    val = parseInt(raw, 10);
+  } else {
+    val = parseFloat(raw.replace(/[.,]/g, ''));
+  }
+
+  if (Number.isFinite(val) && val >= 1 && val <= 100_000_000) {
+    return Math.round(val * 100) / 100;
+  }
+  return null;
 }
 
 export function parseReceiptText(
@@ -425,21 +466,23 @@ export function parseReceiptText(
     }
   }
 
-  // 2. Extract Total Amount (prioritize lines with TOTAL / BAYAR / TAGIHAN)
+  // 2. Extract Total Amount (prioritize lines with TOTAL / DUE / BAYAR / TAGIHAN)
   let totalAmount: number | undefined;
   const totalKeywords =
-    /(grand\s*t[o0]tal|t[o0]tal\s*bayar|t[o0]tal\s*belanja|t[o0]tal\s*tagihan|jumlah\s*bayar|amount\s*due|amount\s*paid|to\s*pay|net\s*t[o0]tal|netto|tagihan|pembayaran|\bt[o0]tal\b|\bjumlah\b)/i;
+    /(grand\s*t[o0]tal|t[o0]tal\s*due|t[o0]tal\s*bayar|t[o0]tal\s*belanja|t[o0]tal\s*tagihan|jumlah\s*bayar|amount\s*due|balance\s*due|amount\s*paid|to\s*pay|net\s*t[o0]tal|net\s*due|netto|tagihan|pembayaran|\bt[o0]tal\b|\bdue\b|\bjumlah\b)/i;
+  const excludeTotalLine =
+    /(sub[\s-]*t[o0]tal|diskon|discount|kembali|change|pajak|tax|vat|ppn|service\s*charge|tunai|cash|tendered|card\s*no)/i;
 
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i];
-    if (totalKeywords.test(line) && !/(sub\s*total|diskon|discount|kembali|change|pajak|tax|ppn|tunai|cash)/i.test(line)) {
+    if (totalKeywords.test(line) && !excludeTotalLine.test(line)) {
       const val = extractAmountFromReceiptLine(line);
       if (val !== null) {
         totalAmount = val;
         break;
       }
       // Check next line if number is on the line below
-      if (i + 1 < lines.length) {
+      if (i + 1 < lines.length && !excludeTotalLine.test(lines[i + 1])) {
         const nextVal = extractAmountFromReceiptLine(lines[i + 1]);
         if (nextVal !== null) {
           totalAmount = nextVal;
@@ -449,12 +492,28 @@ export function parseReceiptText(
     }
   }
 
-  // Fallback: largest plausible amount in bottom half of receipt
+  // Fallback 1: largest currency-tagged amount in bottom 60% of receipt
+  if (!totalAmount) {
+    let maxCurrency = 0;
+    const bottomLines = lines.slice(Math.floor(lines.length * 0.4));
+    const hasCurrencyTag = /(?:rp|idr|egp|l\.?e\.?|e£|sgd|s\$|gbp|£|usd|\$|eur|€)/i;
+    for (const line of bottomLines) {
+      if (excludeTotalLine.test(line)) continue;
+      if (!hasCurrencyTag.test(line)) continue;
+      const val = extractAmountFromReceiptLine(line);
+      if (val !== null && val > maxCurrency) {
+        maxCurrency = val;
+      }
+    }
+    if (maxCurrency > 0) totalAmount = maxCurrency;
+  }
+
+  // Fallback 2: largest plausible clean price in bottom 60% of receipt
   if (!totalAmount) {
     let maxFound = 0;
-    const bottomHalf = lines.slice(Math.floor(lines.length / 3));
-    for (const line of bottomHalf) {
-      if (/(kembali|change|tunai|cash|bayar)/i.test(line)) continue;
+    const bottomLines = lines.slice(Math.floor(lines.length * 0.4));
+    for (const line of bottomLines) {
+      if (excludeTotalLine.test(line)) continue;
       const val = extractAmountFromReceiptLine(line);
       if (val !== null && val > maxFound) {
         maxFound = val;

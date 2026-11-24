@@ -276,9 +276,21 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       if (!ctx) return file;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, w, h);
-      ctx.filter = 'grayscale(1) contrast(1.45) brightness(1.05)';
       ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close?.();
+
+      // Cross-browser grayscale + contrast boost (works on all iOS Safari & Android WebViews)
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const d = imgData.data;
+      const contrast = 1.45;
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        const boosted = Math.max(0, Math.min(255, (lum - 128) * contrast + 135));
+        d[i] = boosted;
+        d[i + 1] = boosted;
+        d[i + 2] = boosted;
+      }
+      ctx.putImageData(imgData, 0, 0);
       return canvas;
     } catch {
       return file;
