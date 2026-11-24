@@ -109,7 +109,7 @@ export interface RecurringRule {
   amount: number;
   categoryId: string;
   accountId: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   dayOfMonth?: number;
   active: boolean;
 }

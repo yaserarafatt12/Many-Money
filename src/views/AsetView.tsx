@@ -139,14 +139,14 @@ export const AsetView: React.FC = () => {
   };
 
   return (
-    <div className="px-4 pt-4 pb-32">
+    <div className="px-4 pt-5 pb-32">
       {/* Top Bar (Matches ATM reference: Edit toggles X / +) */}
       <div className="flex items-center justify-between mb-4">
         {editMode ? (
           <button
             type="button"
             onClick={() => setEditMode(false)}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-primary)] active:opacity-60"
+            className="w-9 h-9 rounded-full ios-input-well flex items-center justify-center text-[var(--text-primary)] active:opacity-60"
             aria-label="Selesai edit"
           >
             <X className="w-5 h-5" />
@@ -159,12 +159,12 @@ export const AsetView: React.FC = () => {
 
         {editMode && <h1 className="text-[17px] font-bold">Aset</h1>}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {!editMode && (
             <button
               type="button"
               onClick={() => setEditMode(true)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+              className="w-9 h-9 rounded-full ios-input-well flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               aria-label="Edit aset"
             >
               <Pencil className="w-[17px] h-[17px]" />
@@ -173,7 +173,7 @@ export const AsetView: React.FC = () => {
           <button
             type="button"
             onClick={() => openModal()}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+            className="w-9 h-9 rounded-full ios-input-well flex items-center justify-center text-[var(--text-primary)] transition"
             aria-label="Tambah aset"
           >
             <Plus className="w-5 h-5" />

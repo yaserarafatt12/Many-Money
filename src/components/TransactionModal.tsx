@@ -46,6 +46,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    addRecurring,
   } = useMoneyStore();
 
   const [type, setType] = useState<TransactionType>('expense');
@@ -59,6 +60,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [description, setDescription] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [repeatFreq, setRepeatFreq] = useState<'none' | 'weekly' | 'monthly' | 'yearly'>('none');
   const [showCalc, setShowCalc] = useState(false);
 
   // Free On-Device Voice & Receipt OCR State
@@ -328,7 +330,21 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       updateTransaction(editingTx.id, payload);
     } else {
       addTransaction(payload);
+      if (repeatFreq !== 'none' && type !== 'transfer') {
+        const dayNum = Number(date.split('-')[2]) || 1;
+        addRecurring({
+          title: payload.title,
+          type: type === 'income' ? 'income' : 'expense',
+          amount: payload.amount,
+          categoryId: payload.categoryId,
+          accountId: payload.accountId,
+          frequency: repeatFreq,
+          dayOfMonth: dayNum,
+          active: true,
+        });
+      }
     }
+    setRepeatFreq('none');
     onClose();
   };
 
@@ -852,6 +868,38 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                         }`}
                       >
                         #{tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!editingTx && type !== 'transfer' && (
+              <div className="mb-4">
+                <span className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1.5 px-0.5">
+                  Ulangi Otomatis
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { id: 'none' as const, label: 'Sekali' },
+                    { id: 'weekly' as const, label: 'Mingguan' },
+                    { id: 'monthly' as const, label: 'Bulanan' },
+                    { id: 'yearly' as const, label: 'Tahunan' },
+                  ].map((opt) => {
+                    const active = repeatFreq === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setRepeatFreq(opt.id)}
+                        className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition ${
+                          active
+                            ? 'bg-[var(--accent-primary)] text-[var(--accent-primary-fg)]'
+                            : 'ios-input-well text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        {opt.label}
                       </button>
                     );
                   })}

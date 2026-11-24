@@ -173,7 +173,7 @@ const AppShell: React.FC = () => {
       className="min-h-screen flex justify-center relative transition-colors duration-300"
       style={{
         backgroundColor: canvasColor,
-        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingTop: 'max(16px, env(safe-area-inset-top, 16px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
