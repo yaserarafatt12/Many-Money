@@ -354,9 +354,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const currencyMeta = CURRENCIES[settings.currency];
   const isLight = settings.theme === 'light';
 
-  // Smart note autocomplete from past transactions
+  // Smart note autocomplete from past transactions (only shown while typing)
   const noteSuggestions = React.useMemo(() => {
-    const map = new Map<string, { title: string; count: number; categoryId: string; accountId: string }>();
+    const q = title.trim().toLowerCase();
+    if (!q) return [];
+    const map = new Map<
+      string,
+      { title: string; count: number; categoryId: string; accountId: string; lastAmount: number }
+    >();
     for (const tx of transactions) {
       if (tx.type !== type) continue;
       const key = tx.title.trim().toLowerCase();
@@ -370,14 +375,22 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           count: 1,
           categoryId: tx.categoryId,
           accountId: tx.accountId,
+          lastAmount: tx.amount,
         });
       }
     }
-    const q = title.trim().toLowerCase();
     return Array.from(map.values())
-      .filter((item) => (!q ? true : item.title.toLowerCase().includes(q) && item.title.toLowerCase() !== q))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
+      .filter((item) => {
+        const lower = item.title.toLowerCase();
+        return lower.includes(q) && lower !== q;
+      })
+      .sort((a, b) => {
+        const aStarts = a.title.toLowerCase().startsWith(q) ? 1 : 0;
+        const bStarts = b.title.toLowerCase().startsWith(q) ? 1 : 0;
+        if (aStarts !== bStarts) return bStarts - aStarts;
+        return b.count - a.count;
+      })
+      .slice(0, 4);
   }, [transactions, type, title]);
 
   // Detect if user typed an amount inside Catatan directly (e.g. "sarapan 10 le")
@@ -778,6 +791,31 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   </span>
                   <span className="shrink-0 underline underline-offset-2">Terapkan</span>
                 </button>
+              )}
+
+              {noteSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  {noteSuggestions.map((s) => (
+                    <button
+                      key={s.title}
+                      type="button"
+                      onClick={() => {
+                        setTitle(s.title);
+                        if (s.categoryId) setCategoryId(s.categoryId);
+                        if (s.accountId) setAccountId(s.accountId);
+                        if (!amountInput.trim() && s.lastAmount > 0) {
+                          setAmountInput(String(s.lastAmount));
+                        }
+                      }}
+                      className="w-full px-3.5 py-2 rounded-[12px] ios-input-well flex items-center justify-between text-[12.5px] active:scale-[0.99] transition"
+                    >
+                      <span className="font-semibold truncate">{s.title}</span>
+                      <span className="text-[11.5px] text-[var(--text-secondary)] shrink-0 ml-2">
+                        {currencyMeta.symbol} {s.lastAmount.toLocaleString('id-ID')} · Pakai
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
 
               <label className="rounded-[12px] ios-input-well px-3.5 py-2.5 block">
