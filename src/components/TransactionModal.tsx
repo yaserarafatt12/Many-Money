@@ -265,8 +265,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const preprocessReceiptImage = async (file: File): Promise<HTMLCanvasElement | File> => {
     try {
       const bitmap = await createImageBitmap(file);
-      const maxDim = 1600;
-      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      // Keep receipt width crisp (1200–1800px) so tall receipts don't shrink too narrow
+      const targetWidth = Math.min(1800, Math.max(1200, bitmap.width));
+      const scale = targetWidth / bitmap.width;
       const w = Math.max(1, Math.round(bitmap.width * scale));
       const h = Math.max(1, Math.round(bitmap.height * scale));
       const canvas = document.createElement('canvas');
@@ -279,13 +280,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       ctx.drawImage(bitmap, 0, 0, w, h);
       bitmap.close?.();
 
-      // Cross-browser grayscale + contrast boost (works on all iOS Safari & Android WebViews)
+      // Cross-browser grayscale + high contrast boost for thermal receipts
       const imgData = ctx.getImageData(0, 0, w, h);
       const d = imgData.data;
-      const contrast = 1.45;
+      const contrast = 1.6;
       for (let i = 0; i < d.length; i += 4) {
         const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-        const boosted = Math.max(0, Math.min(255, (lum - 128) * contrast + 135));
+        const boosted = Math.max(0, Math.min(255, (lum - 128) * contrast + 138));
         d[i] = boosted;
         d[i + 1] = boosted;
         d[i + 2] = boosted;
@@ -306,13 +307,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setSmartStatus(null);
     try {
       const processed = await preprocessReceiptImage(file);
-      const { createWorker } = await import('tesseract.js');
+      const { createWorker, PSM } = await import('tesseract.js');
       const worker = await createWorker('eng', 1, {
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === 'recognizing text' && typeof m.progress === 'number') {
             setOcrProgress(Math.max(15, Math.round(m.progress * 100)));
           }
         },
+      });
+      await worker.setParameters({
+        tessedit_pageseg_mode: PSM.SINGLE_COLUMN,
       });
       const {
         data: { text },
