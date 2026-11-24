@@ -26,7 +26,15 @@ const PERIOD_OPTIONS: { id: StatsPeriodMode; label: string }[] = [
 
 const FALLBACK_COLORS = ['#6BA4E8', '#4CC38A', '#E59866', '#A98AD8', '#D97B93', '#63B8C8'];
 
-export const StatistikView: React.FC = () => {
+interface StatistikViewProps {
+  subTab?: StatistikSubTab;
+  onSubTabChange?: (tab: StatistikSubTab) => void;
+}
+
+export const StatistikView: React.FC<StatistikViewProps> = ({
+  subTab: controlledSubTab,
+  onSubTabChange,
+}) => {
   const { transactions, categories, budgets, settings, upsertBudget } = useMoneyStore();
   const dec = settings.showDecimals;
 
@@ -36,7 +44,13 @@ export const StatistikView: React.FC = () => {
   const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const todayMarkerPct = Math.round((now.getDate() / daysInCurrentMonth) * 100);
 
-  const [subTab, setSubTab] = useState<StatistikSubTab>('statistik');
+  const [internalSubTab, setInternalSubTab] = useState<StatistikSubTab>('statistik');
+  const subTab = controlledSubTab ?? internalSubTab;
+  const setSubTab = (next: StatistikSubTab) => {
+    setInternalSubTab(next);
+    onSubTabChange?.(next);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  };
   const [periodMode, setPeriodMode] = useState<StatsPeriodMode>('bulanan');
   const [periodSheetOpen, setPeriodSheetOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
@@ -777,9 +791,11 @@ export const StatistikView: React.FC = () => {
                   </span>
                   <input
                     type="number"
-                    value={totalBudget}
+                    inputMode="decimal"
+                    value={totalBudget || ''}
+                    placeholder="0"
                     onChange={(e) => upsertBudget('total', Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full bg-transparent text-[22px] font-bold tabular-nums outline-none"
+                    className="w-full bg-transparent text-[22px] font-bold tabular-nums outline-none placeholder:text-[var(--text-tertiary)]"
                   />
                 </label>
 

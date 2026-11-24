@@ -15,12 +15,15 @@ import { AsetView } from './views/AsetView';
 import { LainnyaView } from './views/LainnyaView';
 
 const AppShell: React.FC = () => {
-  const { settings, transactions } = useMoneyStore();
+  const { settings, transactions, budgets } = useMoneyStore();
   const isLight = settings.theme === 'light';
   const t = STRINGS[settings.language];
 
   const [activeTab, setActiveTab] = useState<MainTab>('transaksi');
   const [transaksiSubTab, setTransaksiSubTab] = useState<TransaksiSubTab>('harian');
+  const [statistikSubTab, setStatistikSubTab] = useState<'statistik' | 'anggaran' | 'catatan'>(
+    'statistik'
+  );
   const [memoModalTrigger, setMemoModalTrigger] = useState(0);
 
   const [txModalOpen, setTxModalOpen] = useState(false);
@@ -31,6 +34,35 @@ const AppShell: React.FC = () => {
   const [pinInput, setPinInput] = useState('');
   const [reminderDismissedDate, setReminderDismissedDate] = useState<string | null>(null);
   const [showReminderBanner, setShowReminderBanner] = useState(false);
+  const [showBudgetPrompt, setShowBudgetPrompt] = useState(false);
+
+  // Always scroll to top when switching main tabs or subtabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [activeTab, transaksiSubTab, statistikSubTab]);
+
+  // Offer setting up expense budget after 10 minutes of usage if none is configured
+  useEffect(() => {
+    if (!settings.hasOnboarded) return;
+    const FIRST_SEEN_KEY = 'many-money-first-seen-ts';
+    const DISMISSED_KEY = 'many-money-budget-prompt-dismissed';
+    if (!localStorage.getItem(FIRST_SEEN_KEY)) {
+      localStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
+    }
+    const checkBudgetPrompt = () => {
+      if (budgets.length > 0 || localStorage.getItem(DISMISSED_KEY)) {
+        setShowBudgetPrompt(false);
+        return;
+      }
+      const firstSeen = Number(localStorage.getItem(FIRST_SEEN_KEY) || Date.now());
+      if (Date.now() - firstSeen >= 10 * 60 * 1000) {
+        setShowBudgetPrompt(true);
+      }
+    };
+    checkBudgetPrompt();
+    const id = setInterval(checkBudgetPrompt, 30_000);
+    return () => clearInterval(id);
+  }, [settings.hasOnboarded, budgets.length]);
 
   // Local time 21:00 daily reminder check
   useEffect(() => {
@@ -209,6 +241,48 @@ const AppShell: React.FC = () => {
             </div>
           </div>
         )}
+        {showBudgetPrompt && (
+          <div className="px-4 pt-3">
+            <div className="ios-card px-3.5 py-2.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold truncate">
+                  {settings.language === 'en'
+                    ? 'Set an Expense Budget?'
+                    : 'Atur Anggaran Pengeluaran?'}
+                </div>
+                <div className="text-[11px] text-[var(--text-secondary)]">
+                  {settings.language === 'en'
+                    ? 'Keep your monthly spending on track'
+                    : 'Biar pengeluaran bulananmu lebih terkontrol'}
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('many-money-budget-prompt-dismissed', '1');
+                    setShowBudgetPrompt(false);
+                  }}
+                  className="px-2.5 py-1 rounded-full text-[11.5px] font-medium text-[var(--text-secondary)]"
+                >
+                  {settings.language === 'en' ? 'Later' : 'Nanti'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('many-money-budget-prompt-dismissed', '1');
+                    setShowBudgetPrompt(false);
+                    setStatistikSubTab('anggaran');
+                    setActiveTab('statistik');
+                  }}
+                  className="px-3 py-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[12px] font-semibold"
+                >
+                  {settings.language === 'en' ? 'Set Now' : 'Atur Sekarang'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {activeTab === 'transaksi' && (
             <motion.div
@@ -235,7 +309,10 @@ const AppShell: React.FC = () => {
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.16 }}
             >
-              <StatistikView />
+              <StatistikView
+                subTab={statistikSubTab}
+                onSubTabChange={setStatistikSubTab}
+              />
             </motion.div>
           )}
           {activeTab === 'aset' && (
