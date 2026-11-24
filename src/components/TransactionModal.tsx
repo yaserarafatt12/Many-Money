@@ -262,6 +262,29 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setShowQuickText(false);
   };
 
+  const preprocessReceiptImage = async (file: File): Promise<HTMLCanvasElement | File> => {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const maxDim = 1600;
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, w, h);
+      ctx.filter = 'grayscale(1) contrast(1.45) brightness(1.05)';
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      bitmap.close?.();
+      return canvas;
+    } catch {
+      return file;
+    }
+  };
+
   const handleReceiptSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -270,17 +293,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setOcrProgress(5);
     setSmartStatus(null);
     try {
+      const processed = await preprocessReceiptImage(file);
       const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker('ind+eng', 1, {
+      const worker = await createWorker('eng', 1, {
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === 'recognizing text' && typeof m.progress === 'number') {
-            setOcrProgress(Math.max(10, Math.round(m.progress * 100)));
+            setOcrProgress(Math.max(15, Math.round(m.progress * 100)));
           }
         },
       });
       const {
         data: { text },
-      } = await worker.recognize(file);
+      } = await worker.recognize(processed);
       await worker.terminate();
 
       const parsed = parseReceiptText(text, categories);
@@ -288,10 +312,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         parsed,
         parsed.amount
           ? `Struk terbaca: ${parsed.title || 'Belanja'} (${parsed.amount})`
-          : 'Struk terbaca — silakan cek nominalnya.'
+          : text.trim().length > 0
+            ? 'Struk terbaca — nominal belum terdeteksi, cek kolom Nominal.'
+            : 'Teks struk tidak terbaca — coba foto lebih dekat & terang.'
       );
-    } catch {
-      setSmartStatus('Gagal membaca gambar struk, pastikan foto jelas.');
+    } catch (err) {
+      console.error('Receipt OCR error:', err);
+      setSmartStatus('Gagal membaca gambar struk — pastikan koneksi stabil & foto jelas.');
     } finally {
       setOcrProgress(null);
     }

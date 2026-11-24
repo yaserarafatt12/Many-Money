@@ -382,7 +382,11 @@ function extractAmountFromReceiptLine(line: string): number | null {
     if (digitsOnly.length > 10) continue;
 
     let val: number;
-    if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
+    if (/^\d{1,3}(\.\d{3})+,\d{2}$/.test(raw)) {
+      val = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+    } else if (/^\d{1,3}(,\d{3})+\.\d{2}$/.test(raw)) {
+      val = parseFloat(raw.replace(/,/g, ''));
+    } else if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
       val = parseInt(digitsOnly, 10);
     } else if (/^\d+[.,]\d{2}$/.test(raw)) {
       val = parseFloat(raw.replace(',', '.'));
@@ -423,7 +427,8 @@ export function parseReceiptText(
 
   // 2. Extract Total Amount (prioritize lines with TOTAL / BAYAR / TAGIHAN)
   let totalAmount: number | undefined;
-  const totalKeywords = /(grand\s*total|total\s*bayar|total\s*belanja|total\s*tagihan|jumlah\s*bayar|amount\s*due|\btotal\b)/i;
+  const totalKeywords =
+    /(grand\s*t[o0]tal|t[o0]tal\s*bayar|t[o0]tal\s*belanja|t[o0]tal\s*tagihan|jumlah\s*bayar|amount\s*due|amount\s*paid|to\s*pay|net\s*t[o0]tal|netto|tagihan|pembayaran|\bt[o0]tal\b|\bjumlah\b)/i;
 
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i];
