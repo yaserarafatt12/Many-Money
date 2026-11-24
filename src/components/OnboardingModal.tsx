@@ -4,6 +4,7 @@ import { Check, Globe, Moon, Search, Sun, Wallet } from 'lucide-react';
 import { CurrencyCode } from '../types';
 import { useMoneyStore } from '../store/useMoneyStore';
 import { CURRENCIES } from '../utils/format';
+import { GoogleLogo } from './GoogleLogo';
 
 export const OnboardingModal: React.FC = () => {
   const { settings, updateSettings, signInWithGoogle } = useMoneyStore();
@@ -55,6 +56,34 @@ export const OnboardingModal: React.FC = () => {
         </div>
 
         <div className="space-y-4">
+          {/* 0. Account Mode: Google vs Guest */}
+          <div>
+            <div className="text-[12px] font-semibold text-[var(--text-secondary)] mb-2">
+              {isId ? 'Mode Penyimpanan Akun' : 'Account & Storage Mode'}
+            </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  updateSettings({ hasOnboarded: true });
+                  const res = await signInWithGoogle();
+                  if (!res.ok && res.error) setAuthMsg(res.error);
+                }}
+                className="w-full py-3 px-3.5 rounded-[14px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] font-semibold text-[14px] flex items-center justify-center gap-2.5 active:opacity-85 transition"
+              >
+                <GoogleLogo className="w-4 h-4 shrink-0" />
+                <span>{isId ? 'Masuk dengan Google (Sync Supabase)' : 'Sign in with Google (Supabase)'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateSettings({ hasOnboarded: true })}
+                className="w-full py-2.5 px-3.5 rounded-[14px] ios-input-well text-[13.5px] font-semibold text-[var(--text-primary)] active:opacity-80 transition"
+              >
+                {isId ? 'Mode Guest (Simpan di Browser)' : 'Guest Mode (Browser Storage)'}
+              </button>
+            </div>
+          </div>
+
           {/* 1. Theme */}
           <div>
             <div className="text-[12px] font-semibold text-[var(--text-secondary)] mb-2">
@@ -169,26 +198,13 @@ export const OnboardingModal: React.FC = () => {
           </p>
         )}
 
-        <div className="mt-5 space-y-2.5">
-          <button
-            type="button"
-            onClick={async () => {
-              updateSettings({ hasOnboarded: true });
-              const res = await signInWithGoogle();
-              if (!res.ok && res.error) setAuthMsg(res.error);
-            }}
-            className="w-full py-3.5 rounded-[14px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] font-semibold text-[14.5px] flex items-center justify-center gap-2 active:opacity-85 transition"
-          >
-            <span className="font-bold text-[15px]">G</span>
-            {isId ? 'Masuk dengan Google (Sync Supabase)' : 'Continue with Google (Supabase)'}
-          </button>
-
+        <div className="mt-5">
           <button
             type="button"
             onClick={() => updateSettings({ hasOnboarded: true })}
-            className="w-full py-3 rounded-[14px] ios-input-well font-semibold text-[14px] text-[var(--text-primary)] active:opacity-80 transition"
+            className="w-full py-3.5 rounded-[14px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] font-semibold text-[14.5px] active:opacity-85 transition"
           >
-            {isId ? 'Lanjutkan sebagai Guest (Simpan di Browser)' : 'Continue as Guest (Browser Storage)'}
+            {isId ? 'Mulai Sekarang (Mode Guest)' : 'Get Started (Guest Mode)'}
           </button>
         </div>
       </motion.div>

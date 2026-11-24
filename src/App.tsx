@@ -171,7 +171,11 @@ const AppShell: React.FC = () => {
   return (
     <div
       className="min-h-screen flex justify-center relative transition-colors duration-300"
-      style={{ backgroundColor: canvasColor }}
+      style={{
+        backgroundColor: canvasColor,
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
     >
       <main className="w-full max-w-[430px] min-h-screen relative z-10">
         {showReminderBanner && (

@@ -204,7 +204,10 @@ export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
       />
 
       {/* Paired iOS 26 Floating Dock: Liquid Glass 4-Tab Pill + Detached Circular Action Orb */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-28px)] max-w-[404px] flex items-center gap-2.5 pointer-events-none">
+      <div
+        className="fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-28px)] max-w-[404px] flex items-center gap-2.5 pointer-events-none"
+        style={{ bottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
+      >
         <nav
           aria-label="Navigasi Utama"
           className={`relative flex-1 h-[60px] rounded-full overflow-visible pointer-events-auto transition-transform duration-300 ${

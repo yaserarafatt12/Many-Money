@@ -27,6 +27,7 @@ import { CurrencyCode } from '../types';
 import { useMoneyStore } from '../store/useMoneyStore';
 import { CategoryIcon } from '../components/CategoryIcon';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { GoogleLogo } from '../components/GoogleLogo';
 import { CURRENCIES, exportTransactionsToCSV } from '../utils/format';
 import { BG_PRESETS } from '../utils/themePresets';
 import { STRINGS } from '../utils/i18n';
@@ -295,7 +296,7 @@ export const LainnyaView: React.FC = () => {
                 }}
                 className="w-full py-2.5 px-3.5 rounded-[12px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[13.5px] font-semibold flex items-center justify-center gap-2 active:opacity-85 transition"
               >
-                <span className="font-bold">G</span>
+                <GoogleLogo className="w-4 h-4 shrink-0" />
                 {isEn ? 'Sign in with Google (Sync Supabase)' : 'Masuk dengan Google (Sync Supabase)'}
               </button>
             )}
@@ -838,7 +839,7 @@ export const LainnyaView: React.FC = () => {
                           }}
                           className="w-full py-2.5 rounded-[12px] bg-[var(--accent-primary)] text-[var(--accent-primary-fg)] text-[13px] font-semibold flex items-center justify-center gap-2"
                         >
-                          <span className="font-bold">G</span> Masuk dengan Google
+                          <GoogleLogo className="w-4 h-4 shrink-0" /> Masuk dengan Google
                         </button>
                         <div className="text-[11px] text-center text-[var(--text-tertiary)]">
                           atau pakai email
