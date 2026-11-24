@@ -1,0 +1,15 @@
+{
+  "appId": "com.inuniverse.manymoney",
+  "appName": "Many Money",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#ECF4EE"
+    }
+  }
+}
